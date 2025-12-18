@@ -2,7 +2,7 @@
 
 RAG book recommendation system.
 
-![Demo](demo.jpeg)
+![Demo](assets/demo.jpeg)
 
 ## ✨ Features
 
