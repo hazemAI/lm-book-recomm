@@ -25,10 +25,7 @@ except Exception as e:
     print(f"Unexpected error during import: {e}")
     sys.exit(1)
 
-# Load environment variables
 load_dotenv()
-
-# Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.cerebras.ai/v1")
 MODEL_ID = os.getenv("MODEL_ID", "gpt-oss-120b")
@@ -39,7 +36,6 @@ def initialize_system():
     try:
         books = pd.read_csv("books_cleaned.csv")
 
-        # Ensure local path for placeholder
         current_dir = os.path.dirname(os.path.abspath(__file__))
         placeholder_path = os.path.join(current_dir, "cover-not-found.jpg")
 
@@ -58,7 +54,6 @@ def initialize_system():
             threads=4,
         )
 
-        # Load the vector store from disk if it exists, otherwise index (first 4 only)
         if os.path.exists("./chroma_db"):
             print("Loading existing vector database...")
             db_books = Chroma(
@@ -88,7 +83,6 @@ def initialize_system():
         sys.exit(1)
 
 
-# Global variables (initialized in main)
 books = None
 db_books = None
 llm = None
@@ -130,7 +124,6 @@ def format_book_markdown(row, rank):
 
     img_src = row["large_thumbnail"]
     if not img_src.startswith("http"):
-        # Use absolute path with file/ prefix for Gradio 6 local file serving
         img_src = "file/" + os.path.abspath(img_src).replace("\\", "/")
 
     return f"### {rank}. {row['title']}\n**By {authors}**\n\n![{row['title']}]({img_src})\n\n{description}\n\n---"
@@ -151,7 +144,6 @@ def process_query(message, history):
         return history, ""
 
     try:
-        # 1. Retrieve books
         recommendations = retrieve_semantic_recommendations(message)
 
         if recommendations.empty:
@@ -160,21 +152,17 @@ def process_query(message, history):
             history.append({"role": "assistant", "content": response_msg})
             return history, "No books found."
 
-        # 2. Format for Markdown Gallery
         gallery_md = []
         context_list = []
 
         for i, (_, row) in enumerate(recommendations.iterrows(), 1):
-            # Context for LLM
             context_list.append(
                 f"Title: {row['title']}, Author: {row['authors']}, Description: {row['description']}"
             )
-            # Item for Gallery
             gallery_md.append(format_book_markdown(row, i))
 
         context = "\n\n".join(context_list)
 
-        # 3. LLM Response
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -188,7 +176,6 @@ def process_query(message, history):
         chain = prompt | current_llm
         response = chain.invoke({"message": message, "context": context})
 
-        # Update history
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": response.content})
 
@@ -226,12 +213,11 @@ def main():
                 gr.Markdown("## Recommended Books")
                 gallery = gr.Markdown(height=800)
 
-        # Event Wiring
         submit_btn.click(
             fn=process_query, inputs=[msg, chatbot], outputs=[chatbot, gallery]
         ).then(
             fn=lambda: "",
-            outputs=[msg],  # Clear input box
+            outputs=[msg],
         )
 
         msg.submit(

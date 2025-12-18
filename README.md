@@ -1,6 +1,8 @@
 # 📚 Semantic Book Recommender
 
-Small RAG book recommendation system.
+RAG book recommendation system.
+
+![Demo](demo.jpeg)
 
 ## ✨ Features
 
